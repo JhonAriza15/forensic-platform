@@ -1,0 +1,51 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Gitleaks - Secrets scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bandit - Python SAST
+        run: |
+          pip install bandit
+          bandit -r app/ worker/ -f json -o bandit-report.json || true
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+      - name: Semgrep - SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/python
+
+      - name: Trivy - Container scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'python:3.12-slim'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'

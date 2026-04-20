@@ -1,0 +1,151 @@
+2026-04-15 08:00:00 INFO User login successful | user=user0 | ip=192.168.1.0
+2026-04-15 08:00:30 INFO File accessed | user=user0 | file=/docs/file0.pdf
+2026-04-15 08:00:50 INFO User login successful | user=user1 | ip=192.168.1.1
+2026-04-15 08:01:20 INFO File accessed | user=user1 | file=/docs/file1.pdf
+2026-04-15 08:01:40 INFO User login successful | user=user2 | ip=192.168.1.2
+2026-04-15 08:02:10 INFO File accessed | user=user2 | file=/docs/file2.pdf
+2026-04-15 08:02:30 INFO User login successful | user=user3 | ip=192.168.1.3
+2026-04-15 08:03:00 INFO File accessed | user=user3 | file=/docs/file3.pdf
+2026-04-15 08:03:20 INFO User login successful | user=user4 | ip=192.168.1.4
+2026-04-15 08:03:50 INFO File accessed | user=user4 | file=/docs/file4.pdf
+2026-04-15 08:04:10 INFO User login successful | user=user0 | ip=192.168.1.5
+2026-04-15 08:04:40 INFO File accessed | user=user0 | file=/docs/file5.pdf
+2026-04-15 08:05:00 INFO User login successful | user=user1 | ip=192.168.1.6
+2026-04-15 08:05:30 INFO File accessed | user=user1 | file=/docs/file6.pdf
+2026-04-15 08:05:50 INFO User login successful | user=user2 | ip=192.168.1.7
+2026-04-15 08:06:20 INFO File accessed | user=user2 | file=/docs/file7.pdf
+2026-04-15 08:06:40 INFO User login successful | user=user3 | ip=192.168.1.8
+2026-04-15 08:07:10 INFO File accessed | user=user3 | file=/docs/file8.pdf
+2026-04-15 08:07:30 INFO User login successful | user=user4 | ip=192.168.1.9
+2026-04-15 08:08:00 INFO File accessed | user=user4 | file=/docs/file9.pdf
+2026-04-15 08:08:20 INFO User login successful | user=user0 | ip=192.168.1.10
+2026-04-15 08:08:50 INFO File accessed | user=user0 | file=/docs/file10.pdf
+2026-04-15 08:09:10 INFO User login successful | user=user1 | ip=192.168.1.11
+2026-04-15 08:09:40 INFO File accessed | user=user1 | file=/docs/file11.pdf
+2026-04-15 08:10:00 INFO User login successful | user=user2 | ip=192.168.1.12
+2026-04-15 08:10:30 INFO File accessed | user=user2 | file=/docs/file12.pdf
+2026-04-15 08:10:50 INFO User login successful | user=user3 | ip=192.168.1.13
+2026-04-15 08:11:20 INFO File accessed | user=user3 | file=/docs/file13.pdf
+2026-04-15 08:11:40 INFO User login successful | user=user4 | ip=192.168.1.14
+2026-04-15 08:12:10 INFO File accessed | user=user4 | file=/docs/file14.pdf
+2026-04-15 08:12:30 INFO User login successful | user=user0 | ip=192.168.1.15
+2026-04-15 08:13:00 INFO File accessed | user=user0 | file=/docs/file15.pdf
+2026-04-15 08:13:20 INFO User login successful | user=user1 | ip=192.168.1.16
+2026-04-15 08:13:50 INFO File accessed | user=user1 | file=/docs/file16.pdf
+2026-04-15 08:14:10 INFO User login successful | user=user2 | ip=192.168.1.17
+2026-04-15 08:14:40 INFO File accessed | user=user2 | file=/docs/file17.pdf
+2026-04-15 08:15:00 INFO User login successful | user=user3 | ip=192.168.1.18
+2026-04-15 08:15:30 INFO File accessed | user=user3 | file=/docs/file18.pdf
+2026-04-15 08:15:50 INFO User login successful | user=user4 | ip=192.168.1.19
+2026-04-15 08:16:20 INFO File accessed | user=user4 | file=/docs/file19.pdf
+2026-04-15 08:16:40 INFO User login successful | user=user0 | ip=192.168.1.20
+2026-04-15 08:17:10 INFO File accessed | user=user0 | file=/docs/file20.pdf
+2026-04-15 08:17:30 INFO User login successful | user=user1 | ip=192.168.1.21
+2026-04-15 08:18:00 INFO File accessed | user=user1 | file=/docs/file21.pdf
+2026-04-15 08:18:20 INFO User login successful | user=user2 | ip=192.168.1.22
+2026-04-15 08:18:50 INFO File accessed | user=user2 | file=/docs/file22.pdf
+2026-04-15 08:19:10 INFO User login successful | user=user3 | ip=192.168.1.23
+2026-04-15 08:19:40 INFO File accessed | user=user3 | file=/docs/file23.pdf
+2026-04-15 08:20:00 INFO User login successful | user=user4 | ip=192.168.1.24
+2026-04-15 08:20:30 INFO File accessed | user=user4 | file=/docs/file24.pdf
+2026-04-15 08:20:50 INFO User login successful | user=user0 | ip=192.168.1.25
+2026-04-15 08:21:20 INFO File accessed | user=user0 | file=/docs/file25.pdf
+2026-04-15 08:21:40 INFO User login successful | user=user1 | ip=192.168.1.26
+2026-04-15 08:22:10 INFO File accessed | user=user1 | file=/docs/file26.pdf
+2026-04-15 08:22:30 INFO User login successful | user=user2 | ip=192.168.1.27
+2026-04-15 08:23:00 INFO File accessed | user=user2 | file=/docs/file27.pdf
+2026-04-15 08:23:20 INFO User login successful | user=user3 | ip=192.168.1.28
+2026-04-15 08:23:50 INFO File accessed | user=user3 | file=/docs/file28.pdf
+2026-04-15 08:24:10 INFO User login successful | user=user4 | ip=192.168.1.29
+2026-04-15 08:24:40 INFO File accessed | user=user4 | file=/docs/file29.pdf
+2026-04-15 08:25:00 INFO User login successful | user=user0 | ip=192.168.1.30
+2026-04-15 08:25:30 INFO File accessed | user=user0 | file=/docs/file30.pdf
+2026-04-15 08:25:50 INFO User login successful | user=user1 | ip=192.168.1.31
+2026-04-15 08:26:20 INFO File accessed | user=user1 | file=/docs/file31.pdf
+2026-04-15 08:26:40 INFO User login successful | user=user2 | ip=192.168.1.32
+2026-04-15 08:27:10 INFO File accessed | user=user2 | file=/docs/file32.pdf
+2026-04-15 08:27:30 INFO User login successful | user=user3 | ip=192.168.1.33
+2026-04-15 08:28:00 INFO File accessed | user=user3 | file=/docs/file33.pdf
+2026-04-15 08:28:20 INFO User login successful | user=user4 | ip=192.168.1.34
+2026-04-15 08:28:50 INFO File accessed | user=user4 | file=/docs/file34.pdf
+2026-04-15 08:29:10 INFO User login successful | user=user0 | ip=192.168.1.35
+2026-04-15 08:29:40 INFO File accessed | user=user0 | file=/docs/file35.pdf
+2026-04-15 08:30:00 INFO User login successful | user=user1 | ip=192.168.1.36
+2026-04-15 08:30:30 INFO File accessed | user=user1 | file=/docs/file36.pdf
+2026-04-15 08:30:50 INFO User login successful | user=user2 | ip=192.168.1.37
+2026-04-15 08:31:20 INFO File accessed | user=user2 | file=/docs/file37.pdf
+2026-04-15 08:31:40 INFO User login successful | user=user3 | ip=192.168.1.38
+2026-04-15 08:32:10 INFO File accessed | user=user3 | file=/docs/file38.pdf
+2026-04-15 08:32:30 INFO User login successful | user=user4 | ip=192.168.1.39
+2026-04-15 08:33:00 INFO File accessed | user=user4 | file=/docs/file39.pdf
+2026-04-15 08:33:20 INFO User login successful | user=user0 | ip=192.168.1.40
+2026-04-15 08:33:50 INFO File accessed | user=user0 | file=/docs/file40.pdf
+2026-04-15 08:34:10 INFO User login successful | user=user1 | ip=192.168.1.41
+2026-04-15 08:34:40 INFO File accessed | user=user1 | file=/docs/file41.pdf
+2026-04-15 08:35:00 INFO User login successful | user=user2 | ip=192.168.1.42
+2026-04-15 08:35:30 INFO File accessed | user=user2 | file=/docs/file42.pdf
+2026-04-15 08:35:50 INFO User login successful | user=user3 | ip=192.168.1.43
+2026-04-15 08:36:20 INFO File accessed | user=user3 | file=/docs/file43.pdf
+2026-04-15 08:36:40 INFO User login successful | user=user4 | ip=192.168.1.44
+2026-04-15 08:37:10 INFO File accessed | user=user4 | file=/docs/file44.pdf
+2026-04-15 08:37:30 INFO User login successful | user=user0 | ip=192.168.1.45
+2026-04-15 08:38:00 INFO File accessed | user=user0 | file=/docs/file45.pdf
+2026-04-15 08:38:20 INFO User login successful | user=user1 | ip=192.168.1.46
+2026-04-15 08:38:50 INFO File accessed | user=user1 | file=/docs/file46.pdf
+2026-04-15 08:39:10 INFO User login successful | user=user2 | ip=192.168.1.47
+2026-04-15 08:39:40 INFO File accessed | user=user2 | file=/docs/file47.pdf
+2026-04-15 08:40:00 INFO User login successful | user=user3 | ip=192.168.1.48
+2026-04-15 08:40:30 INFO File accessed | user=user3 | file=/docs/file48.pdf
+2026-04-15 08:40:50 INFO User login successful | user=user4 | ip=192.168.1.49
+2026-04-15 08:41:20 INFO File accessed | user=user4 | file=/docs/file49.pdf
+2026-04-15 08:41:40 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:41:45 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:41:50 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:41:55 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:00 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:05 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:10 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:15 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:20 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:25 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:30 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:35 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:40 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:45 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:50 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:42:55 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:00 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:05 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:10 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:15 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:20 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:25 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:30 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:35 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:40 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:45 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:50 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:43:55 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:44:00 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:44:05 WARN Failed login attempt | user=admin | ip=185.234.217.10
+2026-04-15 08:44:10 ERROR Multiple failed logins | user=admin | attempts=30 | ip=185.234.217.10
+2026-04-15 08:44:20 INFO User login successful | user=admin | ip=185.234.217.10
+2026-04-15 08:44:35 ERROR Privilege escalation detected | user=admin | method=sudo_exploit
+2026-04-15 08:44:45 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_0.sql
+2026-04-15 08:44:53 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_1.sql
+2026-04-15 08:45:01 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_2.sql
+2026-04-15 08:45:09 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_3.sql
+2026-04-15 08:45:17 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_4.sql
+2026-04-15 08:45:25 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_5.sql
+2026-04-15 08:45:33 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_6.sql
+2026-04-15 08:45:41 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_7.sql
+2026-04-15 08:45:49 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_8.sql
+2026-04-15 08:45:57 INFO Sensitive file accessed | user=admin | file=/secure/db_dump_9.sql
+2026-04-15 08:46:05 WARN New connection to internal host | source_ip=185.234.217.10 | dest_ip=192.168.1.100
+2026-04-15 08:46:17 WARN New connection to internal host | source_ip=185.234.217.10 | dest_ip=192.168.1.101
+2026-04-15 08:46:29 WARN New connection to internal host | source_ip=185.234.217.10 | dest_ip=192.168.1.102
+2026-04-15 08:46:41 WARN New connection to internal host | source_ip=185.234.217.10 | dest_ip=192.168.1.103
+2026-04-15 08:46:53 WARN New connection to internal host | source_ip=185.234.217.10 | dest_ip=192.168.1.104
+2026-04-15 08:47:05 ERROR Large data transfer detected | user=admin | size=2GB | destination=external_ip
+2026-04-15 08:47:25 INFO Intrusion prevention triggered | action=blocked_ip | ip=185.234.217.10
+2026-04-15 08:47:35 INFO Security alert generated | severity=high | source_ip=185.234.217.10

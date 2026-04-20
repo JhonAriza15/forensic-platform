@@ -7,7 +7,7 @@ import os
 
 SECRET_KEY = os.getenv("SECRET_KEY", "clave_super_secreta_cambiar_en_produccion")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 480
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

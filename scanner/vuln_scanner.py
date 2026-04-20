@@ -37,7 +37,7 @@ def run_nmap_scan(target: str) -> dict:
             target
         ]
         proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300
+            cmd, capture_output=True, text=True, timeout=9000
         )
         output = proc.stdout
         results["raw_output"] = output

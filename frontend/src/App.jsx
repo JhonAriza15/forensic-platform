@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Layout from './components/Layout'
 import Findings from './pages/Findings'
 import VulnScanner from './pages/VulnScanner'
+import CveIntel from './pages/CveIntel'
 
 
 
@@ -34,6 +35,11 @@ function App() {
       <Route path="/vuln-scanner" element={
         <PrivateRoute>
           <VulnScanner />
+        </PrivateRoute>
+      } />
+      <Route path="/cve-intel" element={
+        <PrivateRoute>
+          <CveIntel />
         </PrivateRoute>
       } />
       <Route path="/" element={<Navigate to="/dashboard" />} />

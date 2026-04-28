@@ -31,11 +31,9 @@ services:
       retries: 5
 
   backend:
-    build: .
+    image: dante2001/forensic-backend:latest
     container_name: forensic_backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"
     environment:
@@ -49,11 +47,9 @@ services:
         condition: service_healthy
 
   worker:
-    build: .
+    image: dante2001/forensic-worker:latest
     container_name: forensic_worker
     command: python worker/worker.py
-    volumes:
-      - .:/app
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/forensic_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
@@ -65,12 +61,8 @@ services:
     restart: always
 
   vuln-scanner:
-    build:
-      context: .
-      dockerfile: scanner/Dockerfile
+    image: dante2001/forensic-vuln-scanner:latest
     container_name: forensic_vuln_scanner
-    volumes:
-      - .:/app
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/forensic_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/

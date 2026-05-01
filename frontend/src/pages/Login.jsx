@@ -13,10 +13,13 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     try {
-      const form = new FormData()
-      form.append('username', email)
-      form.append('password', password)
-      const res = await axios.post('http://localhost:8000/auth/login', form)
+      // OAuth2 expects form-urlencoded data
+      const params = new URLSearchParams()
+      params.append('username', email)
+      params.append('password', password)
+      const res = await axios.post('/auth/login', params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      })
       localStorage.setItem('token', res.data.access_token)
       navigate('/dashboard')
     } catch {

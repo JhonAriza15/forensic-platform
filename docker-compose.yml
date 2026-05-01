@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  forensic_net:
+    driver: bridge
+
 services:
   db:
     image: postgres:15
@@ -12,6 +16,8 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - forensic_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -24,6 +30,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - forensic_net
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
@@ -31,7 +39,7 @@ services:
       retries: 5
 
   backend:
-    image: dante2001/forensic-backend:latest
+    build: .
     container_name: forensic_backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
@@ -40,6 +48,8 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/forensic_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
       - SECRET_KEY=clave_super_secreta_cambiar_en_produccion
+    networks:
+      - forensic_net
     depends_on:
       db:
         condition: service_healthy
@@ -47,12 +57,14 @@ services:
         condition: service_healthy
 
   worker:
-    image: dante2001/forensic-worker:latest
+    build: .
     container_name: forensic_worker
     command: python worker/worker.py
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/forensic_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    networks:
+      - forensic_net
     depends_on:
       db:
         condition: service_healthy
@@ -61,11 +73,15 @@ services:
     restart: always
 
   vuln-scanner:
-    image: dante2001/forensic-vuln-scanner:latest
+    build:
+      context: .
+      dockerfile: scanner/Dockerfile
     container_name: forensic_vuln_scanner
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/forensic_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    networks:
+      - forensic_net
     depends_on:
       db:
         condition: service_healthy

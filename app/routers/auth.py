@@ -16,12 +16,21 @@ limiter = Limiter(key_func=get_remote_address)
 @router.post("/register", response_model=UserResponse, status_code=201)
 @limiter.limit("5/minute")
 def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
-    if auth.get_user_by_email(db, user_data.email):
+    # Normalizar email y username
+    email = user_data.email.strip().lower()
+    username = user_data.username.strip()
+
+    if auth.get_user_by_email(db, email):
         raise HTTPException(status_code=400, detail="Email ya registrado")
+
+    # Verificar username único
+    if db.query(User).filter(User.username == username).first():
+        raise HTTPException(status_code=400, detail="Nombre de usuario ya en uso")
+
     hashed = auth.get_password_hash(user_data.password)
     user = User(
-        email=user_data.email,
-        username=user_data.username,
+        email=email,
+        username=username,
         hashed_password=hashed
     )
     db.add(user)

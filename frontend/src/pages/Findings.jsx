@@ -13,12 +13,12 @@ export default function Findings() {
 
   const fetchAllFindings = async () => {
     try {
-      const logsRes = await axios.get('http://localhost:8000/logs/', { headers })
+      const logsRes = await axios.get('/logs/', { headers })
       const logs = logsRes.data.filter(l => l.findings_count > 0)
 
       const allFindings = []
       for (const log of logs) {
-        const res = await axios.get(`http://localhost:8000/logs/${log.id}/findings`, { headers })
+        const res = await axios.get(`/logs/${log.id}/findings`, { headers })
         res.data.forEach(f => allFindings.push({ ...f, log_filename: log.original_filename }))
       }
       setFindings(allFindings)

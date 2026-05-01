@@ -3,9 +3,11 @@ import json
 import os
 import sys
 import subprocess
+import tempfile
 import re
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 
@@ -36,11 +38,30 @@ def run_nmap_scan(target: str) -> dict:
             "-oN", "-",  # output normal a stdout
             target
         ]
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300
-        )
-        output = proc.stdout
-        results["raw_output"] = output
+
+        # Para evitar problemas con salidas muy grandes, stream a archivo temporal
+        with tempfile.NamedTemporaryFile(mode='w+', delete=False) as tf:
+            try:
+                proc = subprocess.Popen(cmd, stdout=tf, stderr=subprocess.STDOUT, text=True)
+                proc.wait(timeout=9000)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                results["vulnerabilities"].append({
+                    "title": "Timeout en escaneo Nmap",
+                    "description": "El escaneo tardó más de 9000 segundos",
+                    "severity": "medium"
+                })
+            except Exception as e:
+                results["vulnerabilities"].append({
+                    "title": "Error en escaneo Nmap",
+                    "description": str(e),
+                    "severity": "low"
+                })
+            finally:
+                tf.flush()
+                tf.seek(0)
+                output = tf.read()
+                results["raw_output"] = output
 
         # Parsear puertos abiertos
         port_pattern = r"(\d+)/(tcp|udp)\s+(\w+)\s+(.*)"
@@ -91,12 +112,6 @@ def run_nmap_scan(target: str) -> dict:
         if os_match:
             results["os_detection"] = os_match.group(1).strip()
 
-    except subprocess.TimeoutExpired:
-        results["vulnerabilities"].append({
-            "title": "Timeout en escaneo Nmap",
-            "description": "El escaneo tardó más de 5 minutos",
-            "severity": "medium"
-        })
     except Exception as e:
         results["vulnerabilities"].append({
             "title": "Error en escaneo Nmap",
@@ -118,19 +133,38 @@ def run_nikto_scan(target: str) -> dict:
     url = target if target.startswith("http") else f"http://{target}"
 
     try:
+        # Aumentamos timeouts para permitir escaneos largos en hosts lentos
         cmd = [
             "nikto", "-h", url,
             "-Tuning", "1234567890abc",
-            "-timeout", "10",
-            "-maxtime", "300s",
+            "-timeout", "60",
+            "-maxtime", "3600s",  # hasta 1 hora
             "-nointeractive",
             "-C", "all"
         ]
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=360
-        )
-        output = proc.stdout
-        results["raw_output"] = output
+
+        with tempfile.NamedTemporaryFile(mode='w+', delete=False) as tf:
+            try:
+                proc = subprocess.Popen(cmd, stdout=tf, stderr=subprocess.STDOUT, text=True)
+                proc.wait(timeout=9000)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                results["vulnerabilities"].append({
+                    "title": "Timeout en escaneo Nikto",
+                    "description": "El escaneo web tardó más de 9000 segundos",
+                    "severity": "medium"
+                })
+            except Exception as e:
+                results["vulnerabilities"].append({
+                    "title": "Error en escaneo Nikto",
+                    "description": str(e),
+                    "severity": "low"
+                })
+            finally:
+                tf.flush()
+                tf.seek(0)
+                output = tf.read()
+                results["raw_output"] = output
 
         # Parsear resultados de Nikto
         for line in output.split("\n"):
@@ -167,12 +201,6 @@ def run_nikto_scan(target: str) -> dict:
                     "osvdb": osvdb_match.group(1) if osvdb_match else None
                 })
 
-    except subprocess.TimeoutExpired:
-        results["vulnerabilities"].append({
-            "title": "Timeout en escaneo Nikto",
-            "description": "El escaneo web tardó más de 6 minutos",
-            "severity": "medium"
-        })
     except Exception as e:
         results["vulnerabilities"].append({
             "title": "Error en escaneo Nikto",
@@ -307,6 +335,91 @@ def run_ssl_scan(target: str) -> dict:
     return results
 
 
+def fetch_cve_details(cve_id: str) -> dict:
+    """Consulta NVD (services.nvd.nist.gov) para recuperar resumen, puntaje CVSS y referencias.
+
+    Devuelve un dict con keys: summary, cvss, references (list), publishedDate, nvd_url.
+    Si falla la consulta devuelve {}.
+    """
+    if not cve_id:
+        return {}
+    try:
+        url = f"https://services.nvd.nist.gov/rest/json/cve/1.0/{cve_id}"
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            return {}
+        data = resp.json()
+        item = data.get("result", {}).get("CVE_Items", [])
+        if not item:
+            return {}
+        item = item[0]
+        # Extract description
+        desc = ""
+        try:
+            desc = item.get("cve", {}).get("description", {}).get("description_data", [])[0].get("value", "")
+        except Exception:
+            desc = ""
+
+        # Extract CVSS v3 if exists
+        cvss = None
+        try:
+            metrics = item.get("impact", {})
+            if "baseMetricV3" in metrics:
+                v3 = metrics["baseMetricV3"]["cvssV3"]
+                cvss = {"baseScore": v3.get("baseScore"), "vectorString": v3.get("vectorString")}
+            elif "baseMetricV2" in metrics:
+                v2 = metrics["baseMetricV2"]["cvssV2"]
+                cvss = {"baseScore": v2.get("baseScore"), "vectorString": None}
+        except Exception:
+            cvss = None
+
+        # References
+        refs = []
+        try:
+            ref_data = item.get("cve", {}).get("references", {}).get("reference_data", [])
+            for r in ref_data:
+                refs.append(r.get("url"))
+        except Exception:
+            refs = []
+
+        published = item.get("publishedDate")
+
+        return {
+            "summary": desc,
+            "cvss": cvss,
+            "references": refs,
+            "publishedDate": published,
+            "nvd_url": f"https://nvd.nist.gov/vuln/detail/{cve_id}"
+        }
+    except Exception:
+        return {}
+
+
+def enrich_vulnerabilities_list(vulns: list):
+    """Enriquecer una lista de vulnerabilidades: por cada entrada con 'cve', consulta NVD
+    y añade `cve_info` y un resumen legible al campo `description`.
+    """
+    for v in vulns:
+        cve = v.get("cve")
+        if cve:
+            details = fetch_cve_details(cve)
+            if details:
+                v["cve_info"] = details
+                # Añadir resumen corto a la descripción para persistir en BD
+                parts = []
+                if details.get("cvss") and details["cvss"].get("baseScore") is not None:
+                    parts.append(f"CVSS: {details['cvss']['baseScore']} ({details['cvss'].get('vectorString','')})")
+                if details.get("publishedDate"):
+                    parts.append(f"Publicado: {details['publishedDate']}")
+                if details.get("nvd_url"):
+                    parts.append(f"Referencia: {details['nvd_url']}")
+                if details.get("summary"):
+                    parts.append(f"Resumen NVD: {details['summary']}")
+                # Append to description (truncate if muy largo)
+                extra = " -- " + " | ".join(parts)
+                v["description"] = (v.get("description","") + extra)[:2000]
+
+
 # ─── Procesador principal ──────────────────────────────────────
 def process_scan(scan_data: dict):
     """Procesa una solicitud de escaneo de vulnerabilidades."""
@@ -421,8 +534,9 @@ def main():
     print(f"[*] Conectando a RabbitMQ: {RABBITMQ_URL}")
 
     params = pika.URLParameters(RABBITMQ_URL)
-    params.heartbeat = 600
-    params.blocked_connection_timeout = 300
+    # Aumentar heartbeat y timeout de bloqueo para permitir operaciones largas
+    params.heartbeat = 3600
+    params.blocked_connection_timeout = 1200
 
     connection = pika.BlockingConnection(params)
     channel = connection.channel()

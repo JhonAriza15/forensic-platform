@@ -10,10 +10,17 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('http://localhost:8000/auth/register', form)
+      const res = await axios.post('/auth/register', form, { headers: { 'Content-Type': 'application/json' } })
       navigate('/login')
-    } catch {
-      setError('Error al registrar, el email ya existe')
+    } catch (err) {
+      // Mostrar mensaje de error real si viene del backend
+      try {
+        const detail = err?.response?.data?.detail
+        setError(detail || 'Error al registrar, revisa la consola')
+      } catch (e) {
+        setError('Error al registrar, revisa la consola')
+      }
+      console.error('Register error:', err)
     }
   }
 

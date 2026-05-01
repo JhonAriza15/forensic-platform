@@ -24,7 +24,7 @@ export default function Dashboard() {
 
   const fetchLogs = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/logs/', { headers })
+      const res = await axios.get('/logs/', { headers })
       setLogs(res.data)
     } catch {
       navigate('/login')
@@ -44,7 +44,7 @@ export default function Dashboard() {
     const form = new FormData()
     form.append('file', file)
     try {
-      await axios.post('http://localhost:8000/logs/upload', form, { headers })
+      await axios.post('/logs/upload', form, { headers })
       setMessage('Archivo subido, procesando...')
       fetchLogs()
     } catch {
@@ -56,7 +56,7 @@ export default function Dashboard() {
   const handleDelete = async (logId, filename) => {
     if (window.confirm(`¿Eliminar "${filename}"?`)) {
       try {
-        await axios.delete(`http://localhost:8000/logs/${logId}`, { headers })
+        await axios.delete(`/logs/${logId}`, { headers })
         fetchLogs()
       } catch {
         console.error('Error eliminando log')
@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   const handleViewFindings = async (log) => {
     try {
-      const res = await axios.get(`http://localhost:8000/logs/${log.id}/findings`, { headers })
+      const res = await axios.get(`/logs/${log.id}/findings`, { headers })
       setSelectedFindings(res.data)
       setModalLog(log)
     } catch {
@@ -76,7 +76,7 @@ export default function Dashboard() {
 
   const handleViewTimeline = async (log) => {
     try {
-      const res = await axios.get(`http://localhost:8000/logs/${log.id}/timeline`, { headers })
+      const res = await axios.get(`/logs/${log.id}/timeline`, { headers })
       setTimeline(res.data)
       setModalLog(log)
     } catch {
@@ -86,7 +86,7 @@ export default function Dashboard() {
 
   const handleGenerateReport = async (log) => {
   try {
-    const res = await axios.get(`http://localhost:8000/logs/${log.id}/findings`, { headers })
+    const res = await axios.get(`/logs/${log.id}/findings`, { headers })
     generateReport(log, res.data)
     } catch {
     alert('Error generando el informe')
@@ -98,7 +98,7 @@ export default function Dashboard() {
     setScanning(true)
     setScanResults(null)
     try {
-      const res = await axios.post('http://localhost:8000/scanner/url', { url: scanUrl }, { headers })
+      const res = await axios.post('/scanner/url', { url: scanUrl }, { headers })
       setScanResults(res.data)
     } catch {
       alert('Error al escanear la URL')

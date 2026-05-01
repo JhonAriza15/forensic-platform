@@ -49,7 +49,7 @@ const SEVERITY_COLORS = {
   NONE:     '#94a3b8',
 }
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = ''
 
 // ─────────────────────────────────────────────
 // Helpers

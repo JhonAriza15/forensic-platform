@@ -12,6 +12,16 @@ import json
 import pika
 import os
 from datetime import datetime, timezone
+import requests
+import io
+from fastapi.responses import StreamingResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+
+
+
 
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
@@ -280,3 +290,145 @@ def delete_vuln_scan(
     db.delete(scan)
     db.commit()
     return {"detail": "Escaneo eliminado"}
+
+@router.get('/cve/{cve_id}')
+def get_cve_details(cve_id: str):
+    """Proxy simple que consulta la API de NVD y devuelve un resumen útil para el frontend.
+
+    Devuelve: { summary, cvss, references, publishedDate, nvd_url }
+    """
+    try:
+        url = f"https://services.nvd.nist.gov/rest/json/cve/1.0/{cve_id}"
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            return {"error": "No se pudo obtener información desde NVD", "status_code": resp.status_code}
+        data = resp.json()
+        items = data.get('result', {}).get('CVE_Items', [])
+        if not items:
+            return {"error": "CVE no encontrada en NVD"}
+        item = items[0]
+        # description
+        desc = ''
+        try:
+            desc = item.get('cve', {}).get('description', {}).get('description_data', [])[0].get('value', '')
+        except Exception:
+            desc = ''
+        # cvss
+        cvss = None
+        try:
+            impact = item.get('impact', {})
+            if 'baseMetricV3' in impact:
+                v3 = impact['baseMetricV3']['cvssV3']
+                cvss = { 'baseScore': v3.get('baseScore'), 'vectorString': v3.get('vectorString') }
+            elif 'baseMetricV2' in impact:
+                v2 = impact['baseMetricV2']['cvssV2']
+                cvss = { 'baseScore': v2.get('baseScore'), 'vectorString': None }
+        except Exception:
+            cvss = None
+        refs = []
+        try:
+            ref_data = item.get('cve', {}).get('references', {}).get('reference_data', [])
+            for r in ref_data:
+                refs.append(r.get('url'))
+        except Exception:
+            refs = []
+        published = item.get('publishedDate')
+        return {
+            'cve': cve_id,
+            'summary': desc,
+            'cvss': cvss,
+            'references': refs,
+            'publishedDate': published,
+            'nvd_url': f'https://nvd.nist.gov/vuln/detail/{cve_id}'
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+    def _generate_scan_pdf_bytes(scan, vulnerabilities):
+        import io as _io
+        buffer = _io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        elems = []
+
+        # Header
+        elems.append(Paragraph('ForensiLog — Informe Ejecutivo de Escaneo', styles['Title']))
+        elems.append(Spacer(1, 8))
+
+        # Scan metadata
+        meta = [
+            ['ID', str(scan.id)],
+            ['Objetivo', scan.target],
+            ['Tipo', scan.scan_type.value if hasattr(scan.scan_type, 'value') else str(scan.scan_type)],
+            ['Estado', scan.status.value if hasattr(scan.status, 'value') else str(scan.status)],
+            ['Fecha creado', scan.created_at.isoformat() if scan.created_at else 'N/A'],
+            ['Iniciado', scan.started_at.isoformat() if scan.started_at else 'N/A'],
+            ['Finalizado', scan.completed_at.isoformat() if scan.completed_at else 'N/A'],
+            ['Total vulnerabilidades', str(scan.total_vulnerabilities or 0)],
+        ]
+        t = Table(meta, hAlign='LEFT', colWidths=[120, 360])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1e293b')),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elems.append(t)
+        elems.append(Spacer(1, 12))
+
+        # Vulnerabilities table
+        elems.append(Paragraph('Detalle de Vulnerabilidades', styles['Heading2']))
+        elems.append(Spacer(1, 6))
+
+        if not vulnerabilities:
+            elems.append(Paragraph('No se encontraron vulnerabilidades.', styles['Normal']))
+        else:
+            data = [['#', 'Severidad', 'Título', 'CVE', 'Puerto']]
+            for i, v in enumerate(vulnerabilities, start=1):
+                data.append([str(i), v.severity.upper(), v.title, v.cve or '-', str(v.port or '-')])
+
+            table = Table(data, hAlign='LEFT', colWidths=[30, 80, 260, 80, 50])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            elems.append(table)
+
+        elems.append(Spacer(1, 12))
+
+        # Recomendaciones (simple)
+        elems.append(Paragraph('Recomendaciones', styles['Heading2']))
+        elems.append(Spacer(1, 6))
+        elems.append(Paragraph('• Actualizar software identificado con CVE a versiones parcheadas.', styles['Normal']))
+        elems.append(Paragraph('• Restringir accesos innecesarios y aplicar firewall.', styles['Normal']))
+        elems.append(Paragraph('• Reconstruir imágenes de contenedores con base images parcheadas.', styles['Normal']))
+
+        doc.build(elems)
+        buffer.seek(0)
+        return buffer
+
+
+    @router.get('/vuln-scans/{scan_id}/report')
+    def download_scan_report(
+        scan_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+    ):
+        """Genera y devuelve un PDF ejecutivo del escaneo identificado por `scan_id`."""
+        scan = db.query(Scan).filter(Scan.id == scan_id, Scan.user_id == current_user.id).first()
+        if not scan:
+            raise HTTPException(status_code=404, detail='Escaneo no encontrado')
+
+        vulnerabilities = db.query(ScanVulnerability).filter(ScanVulnerability.scan_id == scan_id).all()
+
+        pdf_buffer = _generate_scan_pdf_bytes(scan, vulnerabilities)
+        filename = f"informe_escaneo_{scan.id}.pdf"
+        return StreamingResponse(pdf_buffer, media_type='application/pdf', headers={
+            'Content-Disposition': f'attachment; filename="{filename}"'
+        })

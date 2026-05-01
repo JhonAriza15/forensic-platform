@@ -17,7 +17,7 @@ export default function VulnScanner() {
 
   const fetchScans = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/scanner/vuln-scans', { headers })
+      const res = await axios.get('/scanner/vuln-scans', { headers })
       setScans(res.data)
     } catch {
       navigate('/login')
@@ -41,7 +41,7 @@ export default function VulnScanner() {
     if (!target) return
     setLaunching(true)
     try {
-      await axios.post('http://localhost:8000/scanner/vuln-scan', { target, scan_type: scanType }, { headers })
+      await axios.post('/scanner/vuln-scan', { target, scan_type: scanType }, { headers })
       setTarget('')
       fetchScans()
     } catch {
@@ -52,7 +52,7 @@ export default function VulnScanner() {
 
   const handleViewDetails = async (scan) => {
     try {
-      const res = await axios.get(`http://localhost:8000/scanner/vuln-scans/${scan.id}`, { headers })
+      const res = await axios.get(`/scanner/vuln-scans/${scan.id}`, { headers })
       setDetailData(res.data)
       setSelectedScan(scan)
     } catch {
@@ -63,7 +63,7 @@ export default function VulnScanner() {
   const handleDelete = async (scanId) => {
     if (!window.confirm('¿Eliminar este escaneo?')) return
     try {
-      await axios.delete(`http://localhost:8000/scanner/vuln-scans/${scanId}`, { headers })
+      await axios.delete(`/scanner/vuln-scans/${scanId}`, { headers })
       fetchScans()
     } catch {
       alert('Error al eliminar')
@@ -87,6 +87,17 @@ export default function VulnScanner() {
     if (severity === 'high') return '#f97316'
     if (severity === 'medium') return '#f59e0b'
     return '#22c55e'
+  }
+
+  const [vulnDetail, setVulnDetail] = useState(null)
+  const fetchCve = async (cve) => {
+    if (!cve) return
+    try {
+      const res = await axios.get(`/scanner/cve/${cve}`, { headers })
+      return res.data
+    } catch (err) {
+      return { error: 'No se pudo obtener detalles del CVE' }
+    }
   }
 
   const scanTypeLabel = (type) => {
@@ -268,7 +279,15 @@ export default function VulnScanner() {
               detailData.vulnerabilities.map((v, i) => (
                 <div key={i} style={{ ...styles.vulnCard, borderLeftColor: severityColor(v.severity) }}>
                   <div style={styles.vulnHeader}>
-                    <span style={styles.vulnTitle}>{v.title}</span>
+                    <button style={{ ...styles.vulnTitle, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} onClick={async () => {
+                      // open vuln detail modal (fetch CVE info if available)
+                      if (v.cve) {
+                        const info = await fetchCve(v.cve)
+                        setVulnDetail({ ...v, cve_info: info })
+                      } else {
+                        setVulnDetail(v)
+                      }
+                    }}>{v.title}</button>
                     <span style={{ color: severityColor(v.severity), fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
                       {v.severity}
                     </span>
@@ -285,6 +304,48 @@ export default function VulnScanner() {
               <p style={{ color: '#22c55e', textAlign: 'center', padding: '2rem' }}>
                 No se encontraron vulnerabilidades.
               </p>
+            )}
+
+            {/* Vulnerability detail modal */}
+            {vulnDetail && (
+              <div style={styles.smallModalOverlay} onClick={() => setVulnDetail(null)}>
+                <div style={styles.smallModal} onClick={e => e.stopPropagation()}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0 }}>{vulnDetail.title} {vulnDetail.cve && <span style={{ color: '#ef4444', marginLeft: 8 }}>{vulnDetail.cve}</span>}</h4>
+                    <button style={styles.closeBtn} onClick={() => setVulnDetail(null)}>✕</button>
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <p style={{ color: '#94a3b8' }}>{vulnDetail.description}</p>
+                    {vulnDetail.cve_info && !vulnDetail.cve_info.error && (
+                      <div style={{ marginTop: 8, color: '#94a3b8' }}>
+                        {vulnDetail.cve_info.cvss && <p>CVSS: {vulnDetail.cve_info.cvss.baseScore} {vulnDetail.cve_info.cvss.vectorString}</p>}
+                        {vulnDetail.cve_info.publishedDate && <p>Publicado: {new Date(vulnDetail.cve_info.publishedDate).toLocaleString()}</p>}
+                        <p>Referencias:</p>
+                        <ul style={{ color: '#60a5fa' }}>
+                          {vulnDetail.cve_info.references?.map((r, idx) => (
+                            <li key={idx}><a href={r} target="_blank" rel="noreferrer" style={{ color: '#60a5fa' }}>{r}</a></li>
+                          ))}
+                        </ul>
+                        <p><a href={vulnDetail.cve_info.nvd_url} target="_blank" rel="noreferrer">Ver en NVD</a></p>
+                      </div>
+                    )}
+                    {vulnDetail.cve_info && vulnDetail.cve_info.error && (
+                      <p style={{ color: '#f97316' }}>{vulnDetail.cve_info.error}</p>
+                    )}
+
+                    <div style={{ marginTop: 10 }}>
+                      <h5 style={{ margin: '6px 0' }}>Cómo solucionarlo (recomendación genérica)</h5>
+                      <ul style={{ color: '#94a3b8' }}>
+                        <li>Actualizar el paquete/vulnerable a la versión parcheada indicada en NVD o proveedor.</li>
+                        <li>Restringir acceso: aplicar firewall, limitar usuarios con permisos de escritura.</li>
+                        <li>Si aplica a contenedores: reconstruir la imagen usando base image parcheada y redeploy.</li>
+                        <li>Escanear imágenes locales con Trivy: <code style={{ background: '#0b1220', padding: '2px 6px', borderRadius: 4 }}>trivy image &lt;imagen:tag&gt;</code></li>
+                      </ul>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Nmap raw results section */}
@@ -374,6 +435,8 @@ const styles = {
   vulnTitle: { color: '#f1f5f9', fontWeight: 500, fontSize: '14px' },
   vulnDesc: { color: '#94a3b8', fontSize: '13px', margin: '4px 0 8px' },
   vulnMeta: { color: '#64748b', fontSize: '12px', background: '#0f172a', padding: '2px 8px', borderRadius: '4px' },
+  smallModalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 },
+  smallModal: { background: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', padding: '1rem', width: '600px', maxHeight: '70vh', overflowY: 'auto' },
   rawSection: { marginTop: '12px', background: '#1e293b', borderRadius: '8px', padding: '12px' },
   rawSummary: { color: '#94a3b8', fontSize: '13px', cursor: 'pointer', fontWeight: 500 },
   rawContent: { marginTop: '10px', padding: '10px', background: '#0f172a', borderRadius: '6px' },

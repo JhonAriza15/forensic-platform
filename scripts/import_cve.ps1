@@ -4,7 +4,7 @@
 # Uso: .\scripts\import_cve.ps1
 # ============================================================
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $DumpFile = "cve_data_dump.sql"
 
 Write-Host ""
@@ -38,9 +38,22 @@ Write-Host "      OK - forensic_db corriendo" -ForegroundColor Green
 Write-Host ""
 Write-Host "[3/5] Creando tabla cve_data si no existe..." -ForegroundColor Yellow
 
-$createTable = "CREATE TABLE IF NOT EXISTS cve_data (id SERIAL PRIMARY KEY, cve_id VARCHAR(30) UNIQUE NOT NULL, summary TEXT, cvss_score FLOAT, cvss_vector VARCHAR(200), severity VARCHAR(20), published_date VARCHAR(30), references TEXT, loaded_at TIMESTAMP DEFAULT NOW());"
-$createIdx1  = "CREATE INDEX IF NOT EXISTS ix_cve_data_cve_id ON cve_data(cve_id);"
-$createIdx2  = "CREATE INDEX IF NOT EXISTS ix_cve_severity ON cve_data(severity);"
+$createTable = @"
+CREATE TABLE IF NOT EXISTS cve_data (
+    id SERIAL PRIMARY KEY,
+    cve_id VARCHAR(30) UNIQUE NOT NULL,
+    summary TEXT,
+    cvss_score FLOAT,
+    cvss_vector VARCHAR(200),
+    severity VARCHAR(20),
+    published_date VARCHAR(30),
+    refs TEXT,
+    loaded_at TIMESTAMP DEFAULT NOW()
+);
+"@
+
+$createIdx1 = "CREATE INDEX IF NOT EXISTS ix_cve_data_cve_id ON cve_data(cve_id);"
+$createIdx2 = "CREATE INDEX IF NOT EXISTS ix_cve_severity ON cve_data(severity);"
 
 docker exec forensic_db psql -U postgres -d forensic_db -c $createTable 2>$null | Out-Null
 docker exec forensic_db psql -U postgres -d forensic_db -c $createIdx1  2>$null | Out-Null

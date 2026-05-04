@@ -355,13 +355,13 @@ Abrir virtual box
 # Paso 3
 
 <p align="center">
-<img src="worker/imagen/virtual4.png" width="600">
+<img src="worker/imagen/virtual5.png" width="600">
 </p>
 
 # Paso 4
 
 <p align="center">
-<img src="worker/imagen/virtual5.png" width="600">
+<img src="worker/imagen/virtual4.png" width="600">
 </p>
 
 # Paso 5

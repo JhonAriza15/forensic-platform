@@ -372,6 +372,8 @@ Abrir virtual box
 
 # Paso 6
 
+ir a donde guardaron o se descargo el archivo de metasploitable
+
 <p align="center">
 <img src="worker/imagen/virtual7.png" width="600">
 </p>
@@ -402,6 +404,12 @@ Abrir virtual box
 </p>
 
 # Paso 11
+
+Iniciar la maquina y sacar la ip de la maquina virtual para hacer el scanneo 
+
+para sacar la ip es :
+
+ifconfig 
 
 <p align="center">
 <img src="worker/imagen/virtual12.png" width="600">

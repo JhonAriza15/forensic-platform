@@ -80,11 +80,11 @@ Abrir Docker Desktop
 Necesario para el frontend.
 
 <p align="center">
-     <img src="worker/imagenen/node.png" width="600">
+  <img src="worker/imagen/node.png" width="600">
 </p>
 
 <p align="center">
-     <img src="worker/imagenen/node2.png" width="600">
+  <img src="worker/imagen/node2.png" width="600">
 </p>
 
 Ir a: https://nodejs.org

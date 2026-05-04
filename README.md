@@ -435,7 +435,7 @@ ifconfig
 ### 🌐 Escanear una URL
 
 1. Ir al tab **"Escanear URL"**
-2. Ingresar la URL (ej: https://google.com)
+2. Ingresar la URL ej: http://testphp.vulnweb.com , https://demo.testfire.net , https://owasp.org/www-project-juice-shop/
 3. Hacer clic en **"Escanear"** o presionar Enter
 4. Ver resultados:
 

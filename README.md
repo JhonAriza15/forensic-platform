@@ -109,124 +109,187 @@ npm --version
 
 ## 4️. Clonar el Repositorio
 
-cd C:\Users\TuUsuario\Documents
+
+Crea un carpeta vacia en el escritorio y luego en la misma carpeta click derecho y le dan en la opcion Open Git bash here
+
+<p align="center">
+  <img src="worker/imagen/clonar.png" width="600">
+</p>
+
+luego pegan esta linea de comando
+
 git clone https://github.com/JhonAriza15/forensic-platform.git
 
-cd forensic-platform
+debe salir algo asi:
+
+<p align="center">
+  <img src="worker/imagen/clonar2.png" width="600">
+</p>
+
+asi debe quedar
+
+<p align="center">
+  <img src="worker/imagen/clonar3.png" width="600">
+</p>
 
 ℹ️ Se crea la carpeta del proyecto con todo el código
 
 ## 5️. Configurar variables de entorno (.env)
 Crear archivo .env en la raíz del proyecto:
 
-DATABASE_URL=postgresql://postgres:postgres@db:5432/forensic_db
+como crearla 
 
-RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+Click derecho y le dan en nuevo archivo de texto 
+
+<p align="center">
+  <img src="worker/imagen/env.png" width="600">
+</p>
+
+le cambia el nombre al txt y le coloca .env solo sin el .txt y le da en si 
+
+<p align="center">
+  <img src="worker/imagen/env1.png" width="600">
+</p>
+
+luego lo abre abri en txt pero solo una vez porque si lo cambia el formato se daña 
+
+<p align="center">
+  <img src="worker/imagen/env2.png" width="600">
+</p>
+
+luego pega la esta linea en el archivo y guarda
+
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/forensic_db
+
+RABBITMQ_URL=amqp://guest:guest@localhost:5672/
+
+SECRET_KEY=clave_super_secreta_cambiar_en_produccion
 
 
-## 10. Publicar imágenes en Docker Hub (repositorios actuales)
+<p align="center">
+  <img src="worker/imagen/env3.png" width="600">
+</p>
 
-En tu cuenta de Docker Hub ya tienes los repositorios con estos nombres: `forensic_backend`, `forensic_vuln_scanner`, `forensic_worker`.
+## 6. luego descargar este archivo desde google drive ruta
 
-A continuación tienes instrucciones claras y listas para PowerShell para construir y subir las imágenes exactamente a esos repositorios.
 
-1) Crear repositorios (sólo si aún no existen)
-- Entra en https://hub.docker.com → Repositories → Create repository y crea (si hace falta):
-   - `dante2001/forensic_backend` (public)
-   - `dante2001/forensic_vuln_scanner` (public)
-   - `dante2001/forensic_worker` (public)
+y dejarlo en la ruta principal de proyecto como se ve en la imagen 
 
-2) Login en Docker Hub desde PowerShell
+<p align="center">
+  <img src="worker/imagen/archivo.png" width="600">
+</p>
 
-Forma simple (interactiva):
-```powershell
-docker login -u dante2001
-# cuando te pida la contraseña, pega tu token personal de Docker Hub
-```
+asi debio quedar 
 
-Forma segura (evita dejar el token en el historial):
-```powershell
-$token = Read-Host -Prompt "Introduce el token de Docker Hub" -AsSecureString
-[Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($token)) | docker login --username dante2001 --password-stdin
-```
+<p align="center">
+  <img src="worker/imagen/archivo2.png" width="600">
+</p>
 
-3) Construir y subir las imágenes (PowerShell)
+## 7. Construir y levantar todos los servicios
 
-Ejecuta estos comandos desde la raíz del repositorio:
-```powershell
-# Backend (carpeta raíz)
-docker build -t dante2001/forensic_backend:latest .
-docker push dante2001/forensic_backend:latest
+Este comando construye las imagenes y levanta todos los servicios automaticamente:
 
-# Vulnerability scanner (Dockerfile en scanner/)
-docker build -t dante2001/forensic_vuln_scanner:latest -f scanner/Dockerfile scanner
-docker push dante2001/forensic_vuln_scanner:latest
+Tener abierto el docker
 
-# Worker (si quieres una imagen separada; aquí reutilizamos backend como ejemplo)
-docker tag dante2001/forensic_backend:latest dante2001/forensic_worker:latest
-docker push dante2001/forensic_worker:latest
-```
+<p align="center">
+  <img src="worker/imagen/docker.png" width="600">
+</p>
 
-4) Verificar en Docker Hub
-- Tras cada `docker push`, refresca la página del repositorio en Docker Hub y mira la pestaña *Image Management* para ver el tag y el digest.
+abrir una terminal power shell 
 
-5) Errores comunes y soluciones rápidas
-- `unauthorized: authentication required` o `denied`: revisa que estás logueado y que el repo existe bajo `dante2001`.
-- `requested access to the resource is denied`: el nombre del repo no coincide (usa `dante2001/<repo>`).
-- Errores en `docker build`: mira la salida del build para identificar la capa que falla (revisa dependencias y rutas de archivos).
+ingresar a la ruta donde se dejo el proyecto ejemplo la mia a es C:\Users\jhona\Desktop\Proyecto\forensic-platform
 
-Automatización con GitHub Actions
-- Si prefieres automatizar, usa el workflow `.github/workflows/docker-publish.yml` y añade en GitHub Settings → Secrets los valores `DOCKERHUB_USERNAME` (`dante2001`) y `DOCKERHUB_TOKEN` (tu token). El workflow construirá y publicará cuando hagas push a `main`.
+cd C:\Users\tuusuario\Desktop\Proyecto\forensic-platform
 
-¿Quieres que cree también un script PowerShell `scripts/publish.ps1` que haga todo esto con un solo comando en PowerShell? 
-ABUSEIPDB_API_KEY=eb0b7dda3b23e92a988f2fca87946db036e6055e858c4e9f0b231c94785f19347f1e9e7b8cd76abf 
+<p align="center">
+  <img src="worker/imagen/docker2.png" width="600">
+</p>
 
-ℹ️ Obtener API Key en: https://www.abuseipdb.com
+ejecutamos este comando 
 
-## 6️. Levantar servicios con Docker
-docker-compose up --build
+docker compose up --build -d
 
-⏳ Puede tardar 5–10 minutos la primera vez
+<p align="center">
+  <img src="worker/imagen/docker3.png" width="600">
+</p>
 
-✅ Resultado esperado:
+y debe sali al finalizar esto
 
-Application startup complete
-Worker esperando mensajes
-⚠️ No cerrar esta terminal
+<p align="center">
+  <img src="worker/imagen/docker4.png" width="600">
+</p>
 
-## 7️. Crear tablas en la base de datos
+## 8. Luego en la misma terminal de power shell ejecutar esto
 
-Abrir una nueva terminal:
-docker exec forensic_backend python create_tables.py
-✅ Resultado esperado:
+.\scripts\import_cve.ps1
 
-Tablas creadas exitosamente:
-- users
-- log_files
-- log_events
-- findings
-  
-## 8️. Ejecutar el Frontend
-cd frontend
+<p align="center">
+  <img src="worker/imagen/script.png" width="600">
+</p>
+
+aparece pregunta que si o no escribir S
+
+
+<p align="center">
+  <img src="worker/imagen/script2.png" width="600">
+</p>
+
+y deberia quedar asi
+
+<p align="center">
+  <img src="worker/imagen/script3.png" width="600">
+</p>
+
+## 9. Luego crear las tablas 
+
+con este comando desde la misma terminal power shell
+
+docker exec forensic_backend python seed_user.py
+
+## 10. abri una terminal cmd como administrador importante
+
+Ir a la ruta del proyecto a la carpeta frontend que esta en el mismo proyecto
+
+Ejemplo
+cd C:\Users\Tuusuario\Desktop\Proyecto\forensic-platform\frontend
+
+<p align="center">
+  <img src="worker/imagen/front.png" width="600">
+</p>
+
+Ejecutamos este comando 
+
 npm install
+
+<p align="center">
+  <img src="worker/imagen/front2.png" width="600">
+</p>
+
+y luego este comando 
+
 npm run dev
 
-✅ Resultado esperado:
+> ⚠️ Asi deberia salir no cerra terminal cmd
+
+<p align="center">
+  <img src="worker/imagen/front3.png" width="600">
+</p>
+
+Luego valida desde el navegador ingresar 
 
 Local: http://localhost:5173
+
 🌐 Acceso
 
 Abrir en el navegador:
 
 👉 http://localhost:5173
 
+<p align="center">
+  <img src="worker/imagen/pagina.png" width="600">
+</p>
+
 📌 Nota importante
-
-Debes tener abiertas:
-
-Terminal 1 → docker-compose up
-
-Terminal 2 → base de datos (ya ejecutado)
 
 Terminal 3 → npm run dev
 
@@ -241,6 +304,10 @@ Terminal 3 → npm run dev
    * Email
    * Nombre de usuario
    * Contraseña
+  
+<p align="center">
+<img src="worker/imagen/registro.png" width="600">
+</p>
      
 4. Iniciar sesión con las credenciales creadas
 

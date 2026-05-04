@@ -315,6 +315,98 @@ Terminal 3 → npm run dev
 
 ---
 
+Para validar que funcione la herramienta vamosa subir una maquina virtual 
+
+## 10. Paso a paso para subir maquina virutal en virtual box
+
+Descargar la imagen de metasploitable
+
+Link : 
+
+https://sourceforge.net/projects/metasploitable/files/Metasploitable2/metasploitable-linux-2.0.0.zip/download
+
+y 
+
+virtual box
+
+https://www.virtualbox.org/
+
+
+seguir paso para configurar el virtual box
+
+Abrir virtual box 
+
+<p align="center">
+<img src="worker/imagen/virtual.png" width="600">
+</p>
+
+# Paso 1
+
+<p align="center">
+<img src="worker/imagen/virtual2.png" width="600">
+</p>
+
+# Paso 2
+
+<p align="center">
+<img src="worker/imagen/virtual3.png" width="600">
+</p>
+
+# Paso 3
+
+<p align="center">
+<img src="worker/imagen/virtual4.png" width="600">
+</p>
+
+# Paso 4
+
+<p align="center">
+<img src="worker/imagen/virtual5.png" width="600">
+</p>
+
+# Paso 5
+
+<p align="center">
+<img src="worker/imagen/virtual6.png" width="600">
+</p>
+
+# Paso 6
+
+<p align="center">
+<img src="worker/imagen/virtual7.png" width="600">
+</p>
+
+# Paso 7
+
+<p align="center">
+<img src="worker/imagen/virtual8.png" width="600">
+</p>
+
+
+# Paso 8
+
+<p align="center">
+<img src="worker/imagen/virtual9.png" width="600">
+</p>
+
+# Paso 9
+
+<p align="center">
+<img src="worker/imagen/virtual10.png" width="600">
+</p>
+
+# Paso 10
+
+<p align="center">
+<img src="worker/imagen/virtual11.png" width="600">
+</p>
+
+# Paso 11
+
+<p align="center">
+<img src="worker/imagen/virtual12.png" width="600">
+</p>
+
 ### 📂 Subir un Archivo de Log
 
 1. En el Dashboard, seleccionar el tab **"Subir Log"**

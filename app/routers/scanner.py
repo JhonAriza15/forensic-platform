@@ -5,10 +5,12 @@ from app.models.user import User
 from app.routers.logs import get_current_user
 from app.models.finding import Finding, FindingSeverity, FindingCategory
 from app.models.scan import Scan, ScanStatus, ScanType, ScanVulnerability
+from app.models.cve import CveData
 import urllib.request
 import ssl
 import socket
 import json
+import re
 import pika
 import os
 from datetime import datetime, timezone
@@ -19,6 +21,10 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+
+# Regex para detectar titulos que son solo CVE IDs (sin descripcion real)
+_BARE_CVE_RE     = re.compile(r'^CVE-\d{4}-\d+$', re.IGNORECASE)
+_GENERIC_TITLE_RE = re.compile(r'^Vulnerabilidad detectada:\s*CVE-', re.IGNORECASE)
 
 
 
@@ -158,7 +164,7 @@ def create_vuln_scan(
     current_user: User = Depends(get_current_user)
 ):
     """Crea un nuevo escaneo de vulnerabilidades."""
-    target = payload.get("target")
+    target = (payload.get("target") or "").strip()
     scan_type = payload.get("scan_type", "full")
 
     if not target:
@@ -242,6 +248,33 @@ def get_vuln_scan(
     vulns = db.query(ScanVulnerability).filter(ScanVulnerability.scan_id == scan_id).all()
     now = datetime.now(timezone.utc)
 
+    # ── Enriquecer titulos con BD local de CVEs ───────────────────────────────
+    # Identifica vulnerabilidades cuyo titulo es solo el CVE-ID o el prefijo generico
+    cve_ids_needed = set()
+    for v in vulns:
+        if v.cve:
+            title = (v.title or '').strip()
+            if not title or _BARE_CVE_RE.match(title) or _GENERIC_TITLE_RE.match(title):
+                cve_ids_needed.add(v.cve)
+
+    cve_summary_map = {}
+    if cve_ids_needed:
+        try:
+            rows = db.query(CveData).filter(CveData.cve_id.in_(list(cve_ids_needed))).all()
+            for row in rows:
+                if row.summary:
+                    cve_summary_map[row.cve_id] = row.summary[:150]
+        except Exception:
+            pass
+
+    def _best_title(v):
+        title = (v.title or '').strip()
+        if v.cve and v.cve in cve_summary_map:
+            if not title or _BARE_CVE_RE.match(title) or _GENERIC_TITLE_RE.match(title):
+                return cve_summary_map[v.cve]
+        return v.title or v.cve or '(sin titulo)'
+    # ─────────────────────────────────────────────────────────────────────────
+
     return {
         "id": scan.id,
         "target": scan.target,
@@ -264,7 +297,7 @@ def get_vuln_scan(
         "vulnerabilities": [
             {
                 "id": v.id,
-                "title": v.title,
+                "title": _best_title(v),
                 "description": v.description,
                 "severity": v.severity,
                 "port": v.port,
@@ -292,57 +325,103 @@ def delete_vuln_scan(
     return {"detail": "Escaneo eliminado"}
 
 @router.get('/cve/{cve_id}')
-def get_cve_details(cve_id: str):
-    """Proxy simple que consulta la API de NVD y devuelve un resumen útil para el frontend.
+def get_cve_details(cve_id: str, db: Session = Depends(get_db)):
+    """Busca detalles de un CVE: BD local primero (< 1 ms), fallback NVD API 2.0.
 
-    Devuelve: { summary, cvss, references, publishedDate, nvd_url }
+    Devuelve: { cve, summary, cvss, references, publishedDate, nvd_url, source }
     """
+    import json as _json
+
+    # ── 1. BD local (347k CVEs cargados) ─────────────────────────────────────
     try:
-        url = f"https://services.nvd.nist.gov/rest/json/cve/1.0/{cve_id}"
-        resp = requests.get(url, timeout=10)
-        if resp.status_code != 200:
-            return {"error": "No se pudo obtener información desde NVD", "status_code": resp.status_code}
-        data = resp.json()
-        items = data.get('result', {}).get('CVE_Items', [])
-        if not items:
-            return {"error": "CVE no encontrada en NVD"}
-        item = items[0]
-        # description
-        desc = ''
-        try:
-            desc = item.get('cve', {}).get('description', {}).get('description_data', [])[0].get('value', '')
-        except Exception:
-            desc = ''
-        # cvss
-        cvss = None
-        try:
-            impact = item.get('impact', {})
-            if 'baseMetricV3' in impact:
-                v3 = impact['baseMetricV3']['cvssV3']
-                cvss = { 'baseScore': v3.get('baseScore'), 'vectorString': v3.get('vectorString') }
-            elif 'baseMetricV2' in impact:
-                v2 = impact['baseMetricV2']['cvssV2']
-                cvss = { 'baseScore': v2.get('baseScore'), 'vectorString': None }
-        except Exception:
+        row = db.query(CveData).filter(CveData.cve_id == cve_id).first()
+        if row:
             cvss = None
-        refs = []
-        try:
-            ref_data = item.get('cve', {}).get('references', {}).get('reference_data', [])
-            for r in ref_data:
-                refs.append(r.get('url'))
-        except Exception:
+            if row.cvss_score is not None:
+                cvss = {"baseScore": row.cvss_score, "vectorString": row.cvss_vector or ""}
             refs = []
-        published = item.get('publishedDate')
-        return {
-            'cve': cve_id,
-            'summary': desc,
-            'cvss': cvss,
-            'references': refs,
-            'publishedDate': published,
-            'nvd_url': f'https://nvd.nist.gov/vuln/detail/{cve_id}'
-        }
-    except Exception as e:
-        return {"error": str(e)}
+            try:
+                refs = _json.loads(row.references) if row.references else []
+            except Exception:
+                pass
+            return {
+                "cve":          cve_id,
+                "summary":      row.summary or "",
+                "cvss":         cvss,
+                "references":   refs,
+                "publishedDate": row.published_date,
+                "severity":     row.severity,
+                "nvd_url":      f"https://nvd.nist.gov/vuln/detail/{cve_id}",
+                "source":       "local",
+            }
+    except Exception:
+        pass
+
+    # ── 2. Fallback: NVD API 2.0 ──────────────────────────────────────────────
+    try:
+        url  = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={cve_id}"
+        resp = requests.get(url, timeout=10, headers={"User-Agent": "ForensiLog/1.0"})
+        if resp.status_code == 200:
+            data  = resp.json()
+            items = data.get("vulnerabilities", [])
+            if items:
+                cve_node = items[0].get("cve", {})
+                desc = next(
+                    (d["value"] for d in cve_node.get("descriptions", []) if d.get("lang") == "en"),
+                    ""
+                )
+                cvss = None
+                for key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
+                    metrics = cve_node.get("metrics", {}).get(key)
+                    if metrics:
+                        d    = metrics[0].get("cvssData", {})
+                        cvss = {"baseScore": d.get("baseScore"), "vectorString": d.get("vectorString", "")}
+                        break
+                refs = [r["url"] for r in cve_node.get("references", []) if r.get("url")][:10]
+                return {
+                    "cve":          cve_id,
+                    "summary":      desc,
+                    "cvss":         cvss,
+                    "references":   refs,
+                    "publishedDate": (cve_node.get("published") or "")[:10],
+                    "nvd_url":      f"https://nvd.nist.gov/vuln/detail/{cve_id}",
+                    "source":       "nvd_api",
+                }
+    except Exception:
+        pass
+
+    return {"error": f"CVE {cve_id} no encontrado en BD local ni en NVD", "cve": cve_id}
+
+
+@router.post("/translate")
+def translate_texts(payload: dict, current_user: User = Depends(get_current_user)):
+    """Traduce una lista de textos de inglés a español via Google Translate.
+    El backend hace la llamada (evita CORS en el navegador).
+    """
+    import urllib.parse
+    texts = payload.get("texts", [])
+    if not texts:
+        return {"translations": []}
+
+    translations = []
+    for text in texts:
+        if not text or len(text.strip()) < 3:
+            translations.append(text)
+            continue
+        try:
+            q   = urllib.parse.quote(str(text)[:500])
+            url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q={q}"
+            r   = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code == 200:
+                data = r.json()
+                translated = "".join(x[0] for x in (data[0] or []) if x and x[0])
+                translations.append(translated or text)
+            else:
+                translations.append(text)
+        except Exception:
+            translations.append(text)
+
+    return {"translations": translations}
 
 
     def _generate_scan_pdf_bytes(scan, vulnerabilities):

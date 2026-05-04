@@ -4,5 +4,22 @@ uploads/*
 .env
 venv/
 __pycache__/
-uploads/*
-!uploads/.gitkeep
+*.pyc
+*.pyo
+
+# Datos pesados - compartir por Google Drive
+cve_data_dump.sql
+*.sql
+
+# Claude AI session files
+.claude/
+
+# Node modules (se regeneran con npm install)
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Python cache
+*.egg-info/
+dist/
+build/

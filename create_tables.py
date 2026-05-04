@@ -9,7 +9,7 @@ from sqlalchemy import text
 from app.database import engine, Base
 
 # Importar todos los modelos para que Base los registre
-from app.models import User, LogFile, LogEvent, Finding, Scan, ScanVulnerability
+from app.models import User, LogFile, LogEvent, Finding, Scan, ScanVulnerability, CveData
 
 
 def wait_for_db(max_retries: int = 15, delay: int = 3):

@@ -568,6 +568,61 @@ docker-compose up -d backend
 
 Recomendación: para usuarios que solo quieren ejecutar la plataforma sin desarrollo, usar la opción `docker pull` es la más rápida. Para desarrolladores que vayan a modificar código, usar `docker-compose up --build` es la mejor opción.
 
+---
+
+## Base de Datos CVE Local (consultas sin internet)
+
+El scanner consulta CVEs desde PostgreSQL local en lugar de la API de NVD.
+Esto hace las búsquedas **instantáneas (< 1 ms)** y permite trabajar sin conexión.
+
+### Primera vez — Cargar todos los CVEs (~15 min)
+
+```powershell
+docker exec forensic_backend python scripts/load_cve_feeds.py --mode all
+```
+
+Descarga ~250,000 CVEs desde 2002 hasta hoy desde los feeds oficiales de NIST.
+
+### Exportar CVEs para llevar a otra máquina
+
+En la máquina donde ya tienes los CVEs cargados:
+
+```powershell
+.\scripts\export_cve.ps1
+```
+
+Genera el archivo `cve_data_dump.sql` en la raíz del proyecto (~200 MB).
+
+### Importar CVEs en una máquina nueva
+
+Copia `cve_data_dump.sql` a la raíz del proyecto en la máquina nueva y ejecuta:
+
+```powershell
+.\scripts\import_cve.ps1
+```
+
+Tarda ~30-60 segundos e importa todos los CVEs sin necesidad de descargar nada.
+
+### Actualizar CVEs nuevos (semanal)
+
+```powershell
+docker exec forensic_backend python scripts/load_cve_feeds.py --mode recent
+```
+
+### Ver estadísticas de CVEs cargados
+
+```powershell
+docker exec forensic_backend python scripts/load_cve_feeds.py --mode stats
+```
+
+### Comportamiento del scanner
+
+| Situación | Resultado |
+|-----------|-----------|
+| CVE en BD local | Retorna en < 1 ms, sin internet |
+| CVE no en local | Consulta NVD API como fallback |
+| Sin internet y no en local | Retorna CVE-ID sin descripción |
+
 
 
 

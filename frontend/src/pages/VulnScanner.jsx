@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { generateVulnReport } from '../utils/reportGenerator'
 
 export default function VulnScanner() {
   const [scans, setScans] = useState([])
@@ -10,6 +11,8 @@ export default function VulnScanner() {
   const [selectedScan, setSelectedScan] = useState(null)
   const [detailData, setDetailData] = useState(null)
   const [now, setNow] = useState(Date.now())
+  const [reportLoading, setReportLoading] = useState(null)  // scan id en proceso
+  const [reportMsg, setReportMsg] = useState('')
   const navigate = useNavigate()
 
   const token = localStorage.getItem('token')
@@ -38,10 +41,11 @@ export default function VulnScanner() {
   }, [])
 
   const handleLaunchScan = async () => {
-    if (!target) return
+    const cleanTarget = target.trim()
+    if (!cleanTarget) return
     setLaunching(true)
     try {
-      await axios.post('/scanner/vuln-scan', { target, scan_type: scanType }, { headers })
+      await axios.post('/scanner/vuln-scan', { target: cleanTarget, scan_type: scanType }, { headers })
       setTarget('')
       fetchScans()
     } catch {
@@ -57,6 +61,20 @@ export default function VulnScanner() {
       setSelectedScan(scan)
     } catch {
       alert('Error al obtener detalles')
+    }
+  }
+
+  const handleDownloadReport = async (scan) => {
+    setReportLoading(scan.id)
+    setReportMsg('Obteniendo datos...')
+    try {
+      const res = await axios.get(`/scanner/vuln-scans/${scan.id}`, { headers })
+      await generateVulnReport(res.data, (msg) => setReportMsg(msg), token)
+    } catch {
+      alert('Error al generar el informe')
+    } finally {
+      setReportLoading(null)
+      setReportMsg('')
     }
   }
 
@@ -234,9 +252,19 @@ export default function VulnScanner() {
                   <span>{formatDuration(scan.duration_seconds)}</span>
                 ) : '-'}
               </span>
-              <span style={{ display: 'flex', gap: '8px' }}>
+              <span style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                 {scan.status === 'completed' && (
                   <button style={styles.actionBtn} onClick={() => handleViewDetails(scan)}>Ver detalles</button>
+                )}
+                {scan.status === 'completed' && (
+                  <button
+                    style={{ ...styles.reportBtn, opacity: reportLoading === scan.id ? 0.6 : 1 }}
+                    onClick={() => handleDownloadReport(scan)}
+                    disabled={reportLoading === scan.id}
+                    title={reportLoading === scan.id ? reportMsg : 'Descargar informe ejecutivo PDF'}
+                  >
+                    {reportLoading === scan.id ? '⏳ ' + (reportMsg || 'Generando...') : '⬇ Informe'}
+                  </button>
                 )}
                 <button style={{ ...styles.actionBtn, color: '#ef4444' }} onClick={() => handleDelete(scan.id)}>Eliminar</button>
               </span>
@@ -310,39 +338,80 @@ export default function VulnScanner() {
             {vulnDetail && (
               <div style={styles.smallModalOverlay} onClick={() => setVulnDetail(null)}>
                 <div style={styles.smallModal} onClick={e => e.stopPropagation()}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4 style={{ margin: 0 }}>{vulnDetail.title} {vulnDetail.cve && <span style={{ color: '#ef4444', marginLeft: 8 }}>{vulnDetail.cve}</span>}</h4>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        {vulnDetail.cve && (
+                          <span style={{ background: '#ef444422', color: '#ef4444', border: '1px solid #ef444455', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 700 }}>
+                            {vulnDetail.cve}
+                          </span>
+                        )}
+                        <span style={{ background: severityColor(vulnDetail.severity) + '22', color: severityColor(vulnDetail.severity), border: `1px solid ${severityColor(vulnDetail.severity)}55`, borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}>
+                          {vulnDetail.severity}
+                        </span>
+                      </div>
+                      <h4 style={{ margin: '8px 0 0', color: '#f1f5f9', fontSize: 14, lineHeight: 1.4 }}>
+                        {vulnDetail.title}
+                      </h4>
+                    </div>
                     <button style={styles.closeBtn} onClick={() => setVulnDetail(null)}>✕</button>
                   </div>
-                  <div style={{ marginTop: 8 }}>
-                    <p style={{ color: '#94a3b8' }}>{vulnDetail.description}</p>
+
+                  <div style={{ marginTop: 12 }}>
+                    {/* CVE info from local DB */}
                     {vulnDetail.cve_info && !vulnDetail.cve_info.error && (
-                      <div style={{ marginTop: 8, color: '#94a3b8' }}>
-                        {vulnDetail.cve_info.cvss && <p>CVSS: {vulnDetail.cve_info.cvss.baseScore} {vulnDetail.cve_info.cvss.vectorString}</p>}
-                        {vulnDetail.cve_info.publishedDate && <p>Publicado: {new Date(vulnDetail.cve_info.publishedDate).toLocaleString()}</p>}
-                        <p>Referencias:</p>
-                        <ul style={{ color: '#60a5fa' }}>
-                          {vulnDetail.cve_info.references?.map((r, idx) => (
-                            <li key={idx}><a href={r} target="_blank" rel="noreferrer" style={{ color: '#60a5fa' }}>{r}</a></li>
+                      <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8, padding: '12px 14px', marginBottom: 12 }}>
+                        {vulnDetail.cve_info.summary && (
+                          <p style={{ color: '#cbd5e1', fontSize: 13, margin: '0 0 10px', lineHeight: 1.5 }}>
+                            {vulnDetail.cve_info.summary}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12 }}>
+                          {vulnDetail.cve_info.cvss && (
+                            <span style={{ color: '#94a3b8' }}>
+                              <strong style={{ color: '#f59e0b' }}>CVSS</strong> {vulnDetail.cve_info.cvss.baseScore}
+                              {vulnDetail.cve_info.cvss.vectorString && <span style={{ color: '#64748b', marginLeft: 4 }}>({vulnDetail.cve_info.cvss.vectorString})</span>}
+                            </span>
+                          )}
+                          {vulnDetail.cve_info.severity && (
+                            <span style={{ color: severityColor(vulnDetail.cve_info.severity?.toLowerCase()) }}>
+                              {vulnDetail.cve_info.severity}
+                            </span>
+                          )}
+                          {vulnDetail.cve_info.publishedDate && (
+                            <span style={{ color: '#94a3b8' }}>
+                              <strong style={{ color: '#64748b' }}>Publicado:</strong> {vulnDetail.cve_info.publishedDate}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <a href={vulnDetail.cve_info.nvd_url} target="_blank" rel="noreferrer"
+                            style={{ color: '#60a5fa', fontSize: 12, textDecoration: 'none', border: '1px solid #1e40af', borderRadius: 4, padding: '2px 8px' }}>
+                            Ver en NVD →
+                          </a>
+                          {vulnDetail.cve_info.references?.slice(0, 3).map((r, idx) => (
+                            <a key={idx} href={r} target="_blank" rel="noreferrer"
+                              style={{ color: '#60a5fa', fontSize: 11, textDecoration: 'none', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {new URL(r).hostname}
+                            </a>
                           ))}
-                        </ul>
-                        <p><a href={vulnDetail.cve_info.nvd_url} target="_blank" rel="noreferrer">Ver en NVD</a></p>
+                        </div>
                       </div>
                     )}
-                    {vulnDetail.cve_info && vulnDetail.cve_info.error && (
-                      <p style={{ color: '#f97316' }}>{vulnDetail.cve_info.error}</p>
-                    )}
 
-                    <div style={{ marginTop: 10 }}>
-                      <h5 style={{ margin: '6px 0' }}>Cómo solucionarlo (recomendación genérica)</h5>
-                      <ul style={{ color: '#94a3b8' }}>
-                        <li>Actualizar el paquete/vulnerable a la versión parcheada indicada en NVD o proveedor.</li>
-                        <li>Restringir acceso: aplicar firewall, limitar usuarios con permisos de escritura.</li>
-                        <li>Si aplica a contenedores: reconstruir la imagen usando base image parcheada y redeploy.</li>
-                        <li>Escanear imágenes locales con Trivy: <code style={{ background: '#0b1220', padding: '2px 6px', borderRadius: 4 }}>trivy image &lt;imagen:tag&gt;</code></li>
+                    {/* Recomendaciones */}
+                    <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8, padding: '12px 14px' }}>
+                      <h5 style={{ margin: '0 0 8px', color: '#94a3b8', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Recomendaciones
+                      </h5>
+                      <ul style={{ color: '#94a3b8', fontSize: 13, margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
+                        <li>Actualizar el componente afectado a la versión parcheada indicada en NVD o el proveedor.</li>
+                        <li>Restringir acceso: aplicar firewall y limitar permisos al mínimo necesario.</li>
+                        <li>Si aplica a contenedores: reconstruir con imagen base parcheada y hacer redeploy.</li>
+                        <li>Verificar con: <code style={{ background: '#1e293b', padding: '1px 6px', borderRadius: 3, fontSize: 11 }}>trivy image &lt;imagen:tag&gt;</code></li>
                       </ul>
                     </div>
-
                   </div>
                 </div>
               </div>
@@ -423,6 +492,7 @@ const styles = {
   badge: { background: '#1e293b', color: '#94a3b8', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', width: 'fit-content' },
   pulse: { display: 'inline-block', width: '8px', height: '8px', background: '#f59e0b', borderRadius: '50%', marginRight: '6px', animation: 'pulse 1.5s infinite' },
   actionBtn: { background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: '12px', padding: '4px 8px' },
+  reportBtn: { background: '#22c55e18', border: '1px solid #22c55e55', color: '#22c55e', cursor: 'pointer', fontSize: '12px', padding: '4px 10px', borderRadius: '6px', fontWeight: 600 },
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
   modal: { background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', padding: '1.5rem', width: '700px', maxHeight: '85vh', overflowY: 'auto' },
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' },

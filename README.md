@@ -393,6 +393,8 @@ ir a donde guardaron o se descargo el archivo de metasploitable
 
 # Paso 9
 
+Antes de inciiar la maquina ir a configuracion para activar unos opciones en la tarjeta de red
+
 <p align="center">
 <img src="worker/imagen/virtual10.png" width="600">
 </p>

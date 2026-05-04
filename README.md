@@ -172,6 +172,7 @@ SECRET_KEY=clave_super_secreta_cambiar_en_produccion
 
 ## 6. luego descargar este archivo desde google drive ruta
 
+https://drive.google.com/drive/folders/1TYrNwMKDeZGasvdBvajkW6wXLOceY4BS?usp=sharing
 
 y dejarlo en la ruta principal de proyecto como se ve en la imagen 
 

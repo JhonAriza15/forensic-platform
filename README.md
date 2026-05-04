@@ -59,6 +59,7 @@ Git es necesario para descargar el proyecto desde GitHub.
 
 Ir a: https://git-scm.com/download/win
 Verificar instalación:
+
 git --version
 
 ✅ Resultado esperado: git version 2.x.x
